@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
 import io from 'socket.io-client';
 
-import { DataGrid, GridCellParams} from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import DataGridProgress from '../components/DataGridProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 import { ProgressBar, Button } from '../components';
@@ -60,6 +60,149 @@ const EdmanCycle = () => {
     boxShadow: isButtonClicked ? 'none' : '2px 2px 5px rgba(0, 0, 0, 0.3)',
     transition: 'background 0.3s, box-shadow 0.3s',
   };
+
+  const initialRows = [
+    { id: 1, step: "M1-11 Switch", status: "Incomplete", progress: Math.round(data["currentStepTime"] * 100 / data["totalStepTime"]), time: (Math.round((data["totalStepTime"] - data["currentStepTime"]) * 100) / 100).toFixed(2) },
+    { id: 2, step: "MeOH Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 3, step: "M1-12 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 4, step: "Alkaline Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 5, step: "M1-23 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 6, step: "PITC Solution", status: "Incomplete", progress: 0, time: null },
+    { id: 7, step: "M1-32 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 8, step: "Alkaline Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 9, step: "M1-21 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 10, step: "MeOH Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 11, step: "M2-14 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 12, step: "Waste B Purge", status: "Incomplete", progress: 0, time: null },
+    { id: 13, step: "M1-16 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 14, step: "DDH2O Wash (Raman Spec #1)", status: "Incomplete", progress: 0, time: null },
+    { id: 15, step: "MM1-68 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 16, step: "M2-18 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 17, step: "PAUSE", status: "Incomplete", progress: 0, time: null },
+    { id: 18, step: "M1-61 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 19, step: "MeOH Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 20, step: "M1-14 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 21, step: "EA Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 22, step: "M2-14 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 23, step: "Waste B Purge", status: "Incomplete", progress: 0, time: null },
+    { id: 24, step: "M2-41 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 25, step: "EA Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 26, step: "M1-45 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 27, step: "TFA Bath", status: "Incomplete", progress: 0, time: null },
+    { id: 28, step: "M1-54 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 29, step: "EA Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 30, step: "M2-15 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 31, step: "Waste A Purge", status: "Incomplete", progress: 0, time: null },
+    { id: 32, step: "M2-52 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 33, step: "EA (secondary) Wash", status: "Incomplete", progress: 80, time: null },
+    { id: 34, step: "M2-25 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 35, step: "Waste A Purge", status: "Incomplete", progress: 0, time: null },
+    { id: 36, step: "M1-41 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 37, step: "M2-51 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 38, step: "MeOH Wash", status: "Incomplete", progress: 0, time: null },
+    { id: 39, step: "M1-16 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 40, step: "DDH2O Wash (Raman Spec #2)", status: "Incomplete", progress: 0, time: null },
+    { id: 41, step: "M1-61 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 42, step: "MM1-18 Switch", status: "Incomplete", progress: 0, time: null },
+    { id: 43, step: "M2-18 Switch", status: "Incomplete", progress: 0, time: null },
+  ];
+
+  const ProgressBarCell = ({ value }) => {
+    const [isNextRowStarted, setIsNextRowStarted] = useState(false);
+
+    const handleProgressChange = (event) => {
+      if (event.value >= 100) {
+        setIsNextRowStarted(true);
+      }
+    };
+
+    useEffect(() => {
+      if (isNextRowStarted) {
+        const nextRowKey = id + 1;
+        const nextRowProgress = rows[nextRowKey]?.progress ?? 0;
+        const nextRowProgressBar = (
+          <LinearProgress
+            value={nextRowProgress}
+            onProgressChange={handleProgressChange}
+            variant="determinate"
+          />
+        );
+        document.getElementById("next-row-progress-bar").innerHTML = nextRowProgressBar;
+      }
+    }, [isNextRowStarted]);
+    return (
+      <div style={{ width: '100%' }}>
+        <LinearProgress variant="determinate" value={value} onProgressChange={handleProgressChange} />
+      </div>
+    );
+  };
+
+  const [rows, setRows] = useState(initialRows);
+
+  const handleStepCompletion = (id) => {
+    if (id < rows.length - 1) {
+      setRows((prevRow) => {
+        const updatedProgress = [...prevRow];
+        updatedProgress[id].progress = 100;
+
+        // Check if the next step should start (only if the current step is complete)
+        if (prevRow[id + 1].progress === 0) {
+          updatedProgress[id + 1].progress = 1; // Start the next step
+        }
+
+        return updatedProgress;
+      });
+    }
+  };
+
+  const columns = [
+    { field: 'id', headerName: 'Step Number', width: 140 },
+    { field: 'step', headerName: 'Edman Cycle Step', width: 170 },
+    {
+      field: 'progress',
+      headerName: 'Step Progress',
+      width: 170,
+      editable: true,
+      renderCell: (params) => <ProgressBarCell value={params.value} onStepCompletion={() => handleStepCompletion(params.id)}/>,
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 170,
+      editable: true,
+      renderCell: (params) => {
+        const progress = params.row.progress;
+        if (progress === 0) {
+          return 'Incomplete';
+        } else if (progress >= 100) {
+          return 'Complete';
+        } else {
+          return 'In Progress';
+        }
+      },
+    },
+    {
+      field: 'time',
+      headerName: 'Time Remaining (minutes)',
+      type: 'number',
+      width: 180,
+      editable: true,
+    },
+    {
+      field: 'flow',
+      headerName: 'Flow Volume',
+      type: 'number',
+      width: 180,
+      editable: true,
+    },
+    {
+      field: 'fluid',
+      headerName: 'Fluid Type',
+      type: 'number',
+      width: 180,
+      editable: true,
+    },
+  ];
 
   return (
     <div className="mt-24">
@@ -172,9 +315,16 @@ const EdmanCycle = () => {
               </CircularProgressbarWithChildren>
           </div>
         </div>
-          {/* <div className='mr-5' style={{ height: 600, width: '100%' }}>
-            <DataGridProgress />
-          </div> */}
+          <div className='mr-9' style={{ height: 600, width: '70%' }}>
+            {/* <DataGridProgress /> */}
+            <DataGrid
+              rows={initialRows}
+              columns={columns}
+              // onEditCellChangeCommitted={(params) =>
+              //   handleProgressChange(params.id, params.value)
+              // }
+            />
+          </div>
       </div>
     </div>
   );
