@@ -17,9 +17,12 @@ totalNumCycles = 0
 currentCycle = 1
 edmanData["currentCycle"] = currentCycle
 edmanData["currentTime"] = 0
-edmanData["totalTime"] = 81.8
+edmanData["totalTime"] = 87.6
 edmanData["currentStepTime"] = 0
 edmanData["totalStepTime"] = 0
+edmanData["currentProgress"] = 0
+edmanData["currentStepNumber"] = 0
+edmanData["isFinished"] = 0
 
 
 @sio.event
@@ -91,6 +94,7 @@ def cycleStep(step, cumulativeTime):
     global tempIndex
     global flowIndex
     currentStep = step
+    edmanData["isFinished"] = 0
     oldTime = edmanData["currentTime"]
     edmanData["totalStepTime"] = cumulativeTime - oldTime
     edmanData["totalStepTime"] = round(edmanData["totalStepTime"], 2)
@@ -110,18 +114,21 @@ def cycleStep(step, cumulativeTime):
             edmanData["currentTime"] += 0.05
             edmanData["currentTime"] = round(edmanData["currentTime"], 2)
             edmanData["totalTime"] = round(edmanData["totalTime"], 2)
+            edmanData["currentProgress"] = round(edmanData["currentStepTime"] * 100 / edmanData["totalStepTime"])
             sio.emit("readEdman", edmanData)
             time.sleep(3)
             tempIndex += 3
         flowData["flowVolume"] = 0
         edmanData["currentStepTime"] = 0
         edmanData["totalStepTime"] = 0
+    edmanData["isFinished"] = 1
+    sio.emit("readEdman", edmanData)
+    edmanData["currentStepNumber"] += 1
 
 
 # This the function for running a single cycle of the Edman Cycle.
 def cycle():
-    global currentCycle
-    cycleStep(switch("M1-11"), 0)
+    cycleStep(switch("M1-11"), 0.1)
     cycleStep(flow("MeOH", 100), 1.2)
     cycleStep(switch("M1-12"), 1.3)
     cycleStep(flow("Alkaline", 100), 4.5)
@@ -162,8 +169,6 @@ def cycle():
     cycleStep(flow("DDH20", 100), 81.8)
     cycleStep(switch("M1-61"), 81.8) 
     cycleStep(switch("MM1-18"), 87.6) 
-    currentCycle = currentCycle + 1
-    edmanData["currentCycle"] = currentCycle
     cycleStep(switch("M2-18"), 87.6) 
     
 
@@ -178,6 +183,7 @@ print("Awaiting user input for total number of cycles...")
 @sio.on('totalNumCyclesData')
 def runProgram(totalNumCyclesData):
     global totalNumCycles
+    global currentCycle
     totalNumCycles = int(totalNumCyclesData)
     print('Received total # of cycles:', totalNumCycles)
     if totalNumCycles < 1:
@@ -185,4 +191,9 @@ def runProgram(totalNumCyclesData):
     sio.emit("readEdman", edmanData)
     for i in range(totalNumCycles):
         cycle()
+        currentCycle += 1
+        edmanData["currentCycle"] = currentCycle
+        edmanData["currentTime"] = 0
+        edmanData["currentProgress"] = 0
+
 

@@ -1,23 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
+import React, { useState, useEffect, useContext } from 'react';
 import io from 'socket.io-client';
 
 import { DataGrid } from '@mui/x-data-grid';
-import DataGridProgress from '../components/DataGridProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 import { ProgressBar, Button } from '../components';
 import { CircularProgressbar, CircularProgressbarWithChildren } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { dropdownData } from '../data/dummy';
 import { useStateContext } from '../contexts/ContextProvider';
 
 const socket = io.connect('http://localhost:3001');
-
-const DropDown = ({ currentMode }) => (
-  <div className="w-28 border-1 border-color px-2 py-1 rounded-md">
-    <DropDownListComponent id="time" fields={{ text: 'Time', value: 'Id' }} style={{ border: 'none', color: (currentMode === 'Dark') && 'white' }} value="1" dataSource={dropdownData} popupHeight="220px" popupWidth="120px" />
-  </div>
-);
 
 const EdmanCycle = () => {
   const { currentColor, currentMode } = useStateContext();
@@ -30,25 +21,7 @@ const EdmanCycle = () => {
     setText(event.target.value);
   };
 
-  useEffect(() => {
-    socket.on('receiveEdman', (data) => {
-      setData(data);
-      this.render();
-    });
-  }, [socket]);
-
   const [isButtonClicked, setIsButtonClicked] = useState(false);
-
-  const startButtonClicked = () => {
-    setIsButtonClicked(true);
-    // Simulate a delay to reset the button's state after a certain period
-    setTimeout(() => {
-      setIsButtonClicked(false);
-    }, 300);
-
-    const cycleData = text ;
-    socket.emit('startButtonClicked', cycleData); // Emit the data to the server with the 'buttonClick' event
-  };
 
   const buttonStyle = {
     padding: '10px',
@@ -62,7 +35,7 @@ const EdmanCycle = () => {
   };
 
   const initialRows = [
-    { id: 1, step: "M1-11 Switch", status: "Incomplete", progress: Math.round(data["currentStepTime"] * 100 / data["totalStepTime"]), time: (Math.round((data["totalStepTime"] - data["currentStepTime"]) * 100) / 100).toFixed(2) },
+    { id: 1, step: "M1-11 Switch", status: "Incomplete", progress: 0, time: null },
     { id: 2, step: "MeOH Wash", status: "Incomplete", progress: 0, time: null },
     { id: 3, step: "M1-12 Switch", status: "Incomplete", progress: 0, time: null },
     { id: 4, step: "Alkaline Wash", status: "Incomplete", progress: 0, time: null },
@@ -107,52 +80,70 @@ const EdmanCycle = () => {
     { id: 43, step: "M2-18 Switch", status: "Incomplete", progress: 0, time: null },
   ];
 
-  const ProgressBarCell = ({ value }) => {
-    const [isNextRowStarted, setIsNextRowStarted] = useState(false);
+  const [activeRowIndex, setActiveRowIndex] = useState(null);
+  const [progressBars, setProgressBars] = useState(initialRows)
 
-    const handleProgressChange = (event) => {
-      if (event.value >= 100) {
-        setIsNextRowStarted(true);
+  useEffect(() => {
+    socket.on('receiveEdman', (data) => {
+      setData(data);
+      // console.log(activeRowIndex)
+      // console.log(progressBars[activeRowIndex].progress);
+      if (activeRowIndex !== null) {
+        handleProgressBarUpdate(activeRowIndex);
       }
-    };
+      //console.log(data["currentStepTime"], data["totalStepTime"])
+    });
+  }, [socket, activeRowIndex, progressBars]);
 
-    useEffect(() => {
-      if (isNextRowStarted) {
-        const nextRowKey = id + 1;
-        const nextRowProgress = rows[nextRowKey]?.progress ?? 0;
-        const nextRowProgressBar = (
-          <LinearProgress
-            value={nextRowProgress}
-            onProgressChange={handleProgressChange}
-            variant="determinate"
-          />
-        );
-        document.getElementById("next-row-progress-bar").innerHTML = nextRowProgressBar;
+  const handleProgressBarUpdate = (index) => {
+    const updatedProgressBars = [...progressBars]
+    updatedProgressBars[index].progress = data["currentProgress"]
+    //console.log(updatedProgressBars[index].progress)
+    updatedProgressBars[index].time = (Math.round((data["totalStepTime"] - data["currentStepTime"]) * 100) / 100).toFixed(2) 
+    //console.log(data["currentStepTime"], data["totalStepTime"])
+    //console.log(data["totalStepTime"], data["currentStepTime"])
+    console.log(index)
+    console.log(data["currentStepNumber"])
+
+    if (data["isFinished"] === 1) {
+      console.log("pass")
+      // Reset the progress of the current row to 100
+      updatedProgressBars[index].progress = 100;
+
+      // Move to the next row by incrementing the index
+      //const nextIndex = index + 1;
+      if (index === updatedProgressBars.length - 1) {
+        setActiveRowIndex(null); 
+      } else {
+        // Move to the next row
+        const nextIndex = data["currentStepNumber"] + 1;
+        setActiveRowIndex(nextIndex);
       }
-    }, [isNextRowStarted]);
-    return (
-      <div style={{ width: '100%' }}>
-        <LinearProgress variant="determinate" value={value} onProgressChange={handleProgressChange} />
-      </div>
-    );
+    }
+    setProgressBars(updatedProgressBars);
   };
 
-  const [rows, setRows] = useState(initialRows);
+  const startButtonClicked = () => {
+    setIsButtonClicked(true);
+    // Simulate a delay to reset the button's state after a certain period
+    setTimeout(() => {
+      setIsButtonClicked(false);
+    }, 300);
+  
+    const cycleData = text;
+    socket.emit('startButtonClicked', cycleData); // Emit the data to the server with the 'buttonClick' event
+  
+    // Set the activeRowIndex to the index of the first row (0)
+    setActiveRowIndex(0);
+  };
 
-  const handleStepCompletion = (id) => {
-    if (id < rows.length - 1) {
-      setRows((prevRow) => {
-        const updatedProgress = [...prevRow];
-        updatedProgress[id].progress = 100;
-
-        // Check if the next step should start (only if the current step is complete)
-        if (prevRow[id + 1].progress === 0) {
-          updatedProgress[id + 1].progress = 1; // Start the next step
-        }
-
-        return updatedProgress;
-      });
-    }
+  const ProgressBarCell = ({ value }) => {
+    return (
+      <div style={{ width: '100%' }}>
+        {/* onProgressChange={updateRowProgress} */}
+        <LinearProgress variant="determinate" value={value}/>
+      </div>
+    );
   };
 
   const columns = [
@@ -163,7 +154,9 @@ const EdmanCycle = () => {
       headerName: 'Step Progress',
       width: 170,
       editable: true,
-      renderCell: (params) => <ProgressBarCell value={params.value} onStepCompletion={() => handleStepCompletion(params.id)}/>,
+      // isActive={params.rowIndex === activeRowIndex}
+      renderCell: (params) => <ProgressBarCell value={params.value}/>,
+      progressChangeCallback: handleProgressBarUpdate,
     },
     {
       field: 'status',
@@ -189,8 +182,15 @@ const EdmanCycle = () => {
       editable: true,
     },
     {
-      field: 'flow',
+      field: 'flow_vol',
       headerName: 'Flow Volume',
+      type: 'number',
+      width: 180,
+      editable: true,
+    },
+    {
+      field: 'flow_rate',
+      headerName: 'Flow Rate',
       type: 'number',
       width: 180,
       editable: true,
@@ -240,15 +240,15 @@ const EdmanCycle = () => {
             </div>
             <div className="mt-4 items-center justify-center mr-20">
               <ProgressBar bgcolor="#99ccff" progress={Math.round(data["currentStepTime"] * 100 / data["totalStepTime"])}  height={30} />
-              <h6 className="heading text-xl font-semibold items-center justify-center mt-5 text-white">Time Remaining in Current Step: {(Math.round((data["totalStepTime"] - data["currentStepTime"]) * 100) / 100).toFixed(2)} minutes</h6>
+              <h6 className="heading text-xl font-semibold items-center justify-center mt-5 text-white">Time Remaining in Current Step: {(Math.round((data["totalStepTime"] - data["currentStepTime"]) * 100) / 100 + 0.05).toFixed(2)} minutes</h6>
             </div>
           </div>
         </div>
       </div>
       <div className="flex gap-10 flex-row justify-center mt-5 items-center ml-9">
-        <div className="w-800 bg-white dark:text-gray-200 dark:bg-secondary-dark-bg rounded-2xl p-6 m-3 justify-center items-center text-white" style={{ backgroundColor: currentColor }}>
-          <div className="flex justify-center">
-            <p className="text-3xl font-semibold">Cycle Tracker</p>
+        <div className="w-800 flex bg-white dark:text-gray-200 dark:bg-secondary-dark-bg rounded-2xl p-6 m-3 justify-center items-center text-white" style={{ backgroundColor: currentColor }}>
+          <div className="flex justify-center items-center">
+            <p className="text-3xl font-semibold mr-9">Cycle Tracker:</p>
           </div>
           <div className='mt-10' style={{ width: 500, height: 500 }}>
             <CircularProgressbarWithChildren
@@ -318,7 +318,7 @@ const EdmanCycle = () => {
           <div className='mr-9' style={{ height: 600, width: '70%' }}>
             {/* <DataGridProgress /> */}
             <DataGrid
-              rows={initialRows}
+              rows={progressBars}
               columns={columns}
               // onEditCellChangeCommitted={(params) =>
               //   handleProgressChange(params.id, params.value)

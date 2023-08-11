@@ -43,6 +43,13 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("totalNumCyclesData", data)
     })
 
+    // This is the connection to Daniel's server.
+    socket.on("fluidicsData", (data) => {
+        console.log('Received fluidics data')
+        console.log(data)
+        socket.broadcast.emit("receiveFluidicsData", data)
+    })
+
     socket.on("disconnection", () => {
         console.log(`User Disconnected: ${socket.id}`)
     })

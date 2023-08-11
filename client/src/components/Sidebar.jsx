@@ -4,7 +4,7 @@ import { MdOutlineCancel } from 'react-icons/md';
 import { TooltipComponent } from '@syncfusion/ej2-react-popups';
 import logo from './pumpkinseed_logo.png';
 
-import { links } from '../data/dummy';
+import { links } from '../data/Sidetabs';
 import { useStateContext } from '../contexts/ContextProvider';
 
 const Sidebar = () => {

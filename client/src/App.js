@@ -4,7 +4,7 @@ import { FiSettings } from 'react-icons/fi';
 import { TooltipComponent } from '@syncfusion/ej2-react-popups';
 
 import { Navbar, Footer, Sidebar, ThemeSettings } from './components';
-import { EdmanCycle, FlowControl, Temperature, Stacked, Pyramid, Spectra, Line, Area, Bar, Pie, ColorMapping } from './pages';
+import { EdmanCycle, FlowControl, Temperature, Spectra } from './pages';
 import './App.css';
 
 import { useStateContext } from './contexts/ContextProvider';
@@ -20,13 +20,13 @@ const App = () => {
       setCurrentMode(currentThemeMode);
     }
 
-    const interval = setInterval(() => {
-      this.render();
-    }, 5000); // Update every 5 seconds
+    // const interval = setInterval(() => {
+    //   this.render();
+    // }, 5000); // Update every 5 seconds
 
-    return () => {
-      clearInterval(interval); // Clear the interval when component unmounts
-    };
+    // return () => {
+    //   clearInterval(interval); // Clear the interval when component unmounts
+    // };
   });
 
   return (
@@ -74,22 +74,12 @@ const App = () => {
               <Routes>
                 {/* dashboard  */}
                 <Route path="/" element={(<EdmanCycle />)} />
-                <Route path="/edman%20cycle" element={(<EdmanCycle />)} />
+                <Route path="/edman" element={(<EdmanCycle />)} />
 
                 {/* pages  */}
-                <Route path="/flow%20control" element={<FlowControl />} />
+                <Route path="/fluidics" element={<FlowControl />} />
                 <Route path="/temperature" element={<Temperature />} />
                 <Route path="/spectra" element={<Spectra />} />
-
-                {/* charts  */}
-                <Route path="/line" element={<Line />} />
-                <Route path="/area" element={<Area />} />
-                <Route path="/bar" element={<Bar />} />
-                <Route path="/pie" element={<Pie />} />
-                <Route path="/color-mapping" element={<ColorMapping />} />
-                <Route path="/pyramid" element={<Pyramid />} />
-                <Route path="/stacked" element={<Stacked />} />
-
               </Routes>
             </div>
             <Footer />

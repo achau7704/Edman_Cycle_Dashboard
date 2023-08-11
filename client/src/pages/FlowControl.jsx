@@ -20,8 +20,11 @@ const FlowControl = () => {
   return (
     <div className="m-2 md:m-10 mt-24 p-2 md:p-10 bg-white rounded-3xl">
       <Header category="Metric" title="Flow Control" />
+      <div className="flex flex-col">
+        <h className="text-3xl mb-6">This page can display additional flow data from the system that is not on the main page.</h>
+      </div>
       <div>
-        <h4 className="heading text-2xl font-semibold items-center justify-center mt-10">Flow Volume (Flow 2): {data["flowVolume"]} microliters</h4>
+        <h4 className="heading text-2xl font-semibold items-center justify-center mt-10">Flow Volume (microliters): {data["flowVolume"]}</h4>
       </div>
       <div>
         <h4 className="heading text-2xl font-semibold items-center justify-center mt-10">Volume Remaining in Syringe:</h4>
