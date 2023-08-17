@@ -80,15 +80,15 @@ const EdmanCycle = () => {
     { id: 43, step: "M2-18 Switch", status: "Incomplete", progress: 0, time: null },
   ];
 
-  const [activeRowIndex, setActiveRowIndex] = useState(null);
+  const [activeRowIndex, setActiveRowIndex] = useState(0);
   const [progressBars, setProgressBars] = useState(initialRows)
 
   useEffect(() => {
     socket.on('receiveEdman', (data) => {
       setData(data);
-      // console.log(activeRowIndex)
-      // console.log(progressBars[activeRowIndex].progress);
-      if (activeRowIndex !== null) {
+      console.log(activeRowIndex)
+      console.log(activeRowIndex.progress)
+      if (activeRowIndex !== null && progressBars[activeRowIndex].progress !== 100) {
         handleProgressBarUpdate(activeRowIndex);
       }
       //console.log(data["currentStepTime"], data["totalStepTime"])
@@ -96,16 +96,12 @@ const EdmanCycle = () => {
   }, [socket, activeRowIndex, progressBars]);
 
   const handleProgressBarUpdate = (index) => {
-    const updatedProgressBars = [...progressBars]
-    updatedProgressBars[index].progress = data["currentProgress"]
-    //console.log(updatedProgressBars[index].progress)
+    const updatedProgressBars = [...progressBars];
+    updatedProgressBars[index].progress = (Math.round(data["currentStepTime"] * 100 / data["totalStepTime"]));
     updatedProgressBars[index].time = (Math.round((data["totalStepTime"] - data["currentStepTime"]) * 100) / 100).toFixed(2) 
     //console.log(data["currentStepTime"], data["totalStepTime"])
     //console.log(data["totalStepTime"], data["currentStepTime"])
-    console.log(index)
-    console.log(data["currentStepNumber"])
-
-    if (data["isFinished"] === 1) {
+    if (updatedProgressBars[index].progress >= 100) {
       console.log("pass")
       // Reset the progress of the current row to 100
       updatedProgressBars[index].progress = 100;
@@ -116,12 +112,58 @@ const EdmanCycle = () => {
         setActiveRowIndex(null); 
       } else {
         // Move to the next row
-        const nextIndex = data["currentStepNumber"] + 1;
+        const nextIndex = index + 1;
         setActiveRowIndex(nextIndex);
       }
+      // if (nextIndex < updatedProgressBars.length) {
+      //   console.log(nextIndex)
+      //   setActiveRowIndex(nextIndex);
+      // } else {
+      //   setActiveRowIndex(null); // No more rows to update
+      // }
     }
     setProgressBars(updatedProgressBars);
   };
+
+  // useEffect(() => {
+  //   socket.on('receiveEdman', (data) => {
+  //     setData(data);
+  //     // console.log(activeRowIndex)
+  //     // console.log(progressBars[activeRowIndex].progress);
+  //     if (activeRowIndex !== null) {
+  //       handleProgressBarUpdate(activeRowIndex);
+  //     }
+  //     //console.log(data["currentStepTime"], data["totalStepTime"])
+  //   });
+  // }, [socket, activeRowIndex, progressBars]);
+
+  // const handleProgressBarUpdate = (index) => {
+  //   const updatedProgressBars = [...progressBars]
+  //   updatedProgressBars[index].progress = data["currentProgress"]
+  //   //console.log(updatedProgressBars[index].progress)
+  //   updatedProgressBars[index].time = (Math.round((data["totalStepTime"] - data["currentStepTime"]) * 100) / 100).toFixed(2) 
+  //   //console.log(data["currentStepTime"], data["totalStepTime"])
+  //   //console.log(data["totalStepTime"], data["currentStepTime"])
+  //   console.log(index)
+  //   console.log(data["currentStepNumber"])
+
+  //   if (data["isFinished"] === 1) {
+  //     console.log("pass")
+  //     // Reset the progress of the current row to 100
+  //     updatedProgressBars[index].progress = 100;
+
+  //     // Move to the next row by incrementing the index
+  //     //const nextIndex = index + 1;
+  //     if (index === updatedProgressBars.length - 1) {
+  //       setActiveRowIndex(null); 
+  //     } else {
+  //       // Move to the next row
+  //       const nextIndex = data["currentStepNumber"] + 1;
+  //       setActiveRowIndex(nextIndex);
+  //     }
+  //   }
+  //   setProgressBars(updatedProgressBars);
+  // };
 
   const startButtonClicked = () => {
     setIsButtonClicked(true);

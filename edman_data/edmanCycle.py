@@ -93,6 +93,7 @@ def purge(waste):
 def cycleStep(step, cumulativeTime):
     global tempIndex
     global flowIndex
+    time.sleep(1)
     currentStep = step
     edmanData["isFinished"] = 0
     oldTime = edmanData["currentTime"]
@@ -101,7 +102,6 @@ def cycleStep(step, cumulativeTime):
     sio.emit("readFlow", flowData)
     if edmanData["totalStepTime"] == 0:
         edmanData["currentStep"] = currentStep
-        time.sleep(1)
     else:
         while edmanData["currentStepTime"] < edmanData["totalStepTime"]:
             temperature = generate_random_temperature()
